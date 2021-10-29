@@ -8,14 +8,20 @@ from tqdm import tqdm
 
 class NaiveBayes:
     """
-    Implementation of the popular Naive Bayes classifier, used to distinguish k different classes from p quantiative features.
-    Note that this implementation currently doesn't support qualitative features, and will treat them exactly as the 
+    Implementation of the popular Naive Bayes classifier, used to distinguish 
+    k different classes from p quantiative features.
+    Note that this implementation currently doesn't support qualitative 
+    features, and will treat them exactly as the 
     quantitative features.
 
-    Naive Bayes is a generative probabilistic model, that tries to estimate Bayes Classifier through indirectly estimating
-    the posterior class probailities P(Y=k|X=x), by estimating the class conditonals P(X=x|Y=k) and prior P(X) and P(Y) and
-    using Bayes Theorem to model P(Y=k|X=x). Naive Bayes assumes independence of features among each class and models 
-    the individual feature conditional distribution as univariate gaussian density functions. 
+    Naive Bayes is a generative probabilistic model, that tries to estimate 
+    Bayes Classifier through indirectly estimating
+    the posterior class probailities P(Y=k|X=x), by estimating the class 
+    conditonals P(X=x|Y=k) and prior P(X) and P(Y) and
+    using Bayes Theorem to model P(Y=k|X=x). Naive Bayes assumes independence 
+    of features among each class and models 
+    the individual feature conditional distribution as univariate gaussian 
+    density functions. 
 
     Training Running Time: O(1)
     Training Space Complexity: O(1)

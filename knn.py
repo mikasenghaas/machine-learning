@@ -109,9 +109,6 @@ class KNN:
 
         elif self.algorithm == 'ball-tree':
             pass
-
-        
-
             
 
     @staticmethod
