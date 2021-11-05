@@ -1,12 +1,38 @@
 import numpy as np 
 from sklearn import datasets
-from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import accuracy_score
 from matplotlib import pyplot as plt
 from icecream import ic
 from tqdm import tqdm
 
-class HierachicalClustering:
+class BottomUpHierachicalClustering:
+    """
+    Implementation of the bottom up hierarchical clustering algorithm.
+    Used in unsupervised learning setting to detect any number k clusters within 
+    p-dimensional data. The clusters are initialised as singletons in the number of 
+    data points and then continuously merged, until there either exists a single 
+    cluster or the minimal cluster number min-clusters (in .fit()) was reached.
+
+    For a single merge from k -> k-1 clusters, the distance between all unique pairs of
+    clusters is measured and the most similar cluster pair is merged:
+    The cluster distance is a hyper parameter of the algorithm and can be set:
+
+    self.cluster_algorithm : str
+    Determines how to compute the distance between two clusters C1 and C2
+
+    'single-link': min(dist(x,y) | x in C1, y in C2)
+    'complete-link': max(dist(x,y) | x in C1, y in C2)
+    'group-average': mean(dist(x,y) | x in C1, y in C2)
+
+    The single-link algorithm tends to find highly unbalanced classes and detect outliers,
+    while the other two cluster measurements tend to create equally large clusters.
+
+    self.clusters : dict
+    Stores all cluster mapping (array of length n, indicating which cluster the
+    data point at index i belongs to) for each number of clusters.
+    key : number of clusters k 
+    value : array of cluster mapping 
+    """
+
     def __init__(self, cluster_distance='group_average'):
         self.X = None
         self.n = None
@@ -99,7 +125,7 @@ def main():
     X = np.vstack((class0, class1))
     y = np.hstack((np.zeros(n), np.ones(n))).astype(int)
 
-    clu = HierachicalClustering(cluster_distance='group-average')
+    clu = ButtomUpHierachicalClustering(cluster_distance='group-average')
     clu.fit(X)
     clusters = clu.get_clusters(2)
 
