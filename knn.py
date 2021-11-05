@@ -34,12 +34,12 @@ class KNN:
     Prediction Time: O(k * log(n))
     Prediction Space: O(1)
 
-
+    => NOT IMPLEMENTED YET
 
     Class is initialised with the method's hyperparameters, here:
     self.K (int)    : The number of k neigbours to compute estimate 
                       of posterior class condtionals
-    self.alg (str)  : Algorithm to use
+    self.algorithm (str)  : Algorithm to use
 
     All data specific attributes are intialised to 'None'
     and updated on call of .fit(). Transfer Training is not supported - 

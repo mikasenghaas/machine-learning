@@ -51,8 +51,8 @@ class KMeans:
 def main():
     colors = np.array(['red', 'blue'])
     mean0 = [2,2]
-    mean1 = [4,4]
-    cov = [[1, 0],[0,1]]
+    mean1 = [3,3]
+    cov = [[0.5, 0],[0,0.5]]
     class0 = np.random.multivariate_normal(mean0, cov, 100)
     class1 = np.random.multivariate_normal(mean1, cov, 100)
 
