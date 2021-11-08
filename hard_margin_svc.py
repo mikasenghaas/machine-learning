@@ -40,6 +40,8 @@ class HardMarginSVC:
         self.n = None
         self.p = None
 
+        self.mapping = {}
+
         self.kernel = kernel
         self.support_idx = None
         self.w = None
@@ -49,6 +51,10 @@ class HardMarginSVC:
         self.X = np.array(X)
         self.y = np.array(y)
         self.n, self.p = self.X.shape
+
+        # initialise mapping dict to translate between true y labels and Y={-1, 1} needed for this HardMarginSVC
+        self.map_orig = {x:y for x, y in zip([-1, 1], np.unique(self.y))}
+        self.map_new = {y:x for x, y in zip([-1, 1], np.unique(self.y))}
 
         # find support vectors
         K = np.zeros((self.n, self.n))
@@ -80,7 +86,7 @@ class HardMarginSVC:
 
         A = np.eye(self.n)  
         a0 = np.random.rand(self.n)  # initial guess for alpha vector (randomised
-        y = self.y 
+        y = np.array([self.map_new[i] for i in self.y])
         constraints = ({'type': 'ineq', 'fun': lambda a: A @ a, 'jac': lambda a: A},
                        {'type': 'eq', 'fun': lambda a: a @ y.T, 'jac': lambda a: y.T})
 
@@ -90,14 +96,14 @@ class HardMarginSVC:
         self.support_idx = np.where(a > 0)[0] 
 
         X_sv = self.X[self.support_idx]
-        y_sv = self.y[self.support_idx]
+        y_sv = y[self.support_idx]
         a_sv = a[self.support_idx]
 
         self.b = HardMarginSVC.compute_b(X_sv, y_sv, a_sv, HardMarginSVC.linear_kernel)
         self.w = HardMarginSVC.compute_weights(self.p, X_sv, y_sv, a_sv, HardMarginSVC.linear_kernel)
 
     def predict(self, X):
-        return np.where(self.predict_val(X), 1, -1)  
+        return np.where(self.predict_val(X), self.map_orig[1], self.map_orig[-1])  
 
     def predict_val(self, X):
         return X @ self.w + self.b
@@ -137,10 +143,8 @@ def main():
     SHOW_FIGURES = True
 
     X, y = load_iris(return_X_y=True)
-    exclude_2 = y != 2
-    X = X[exclude_2, :2]
-    y = y[exclude_2]
-    y = np.where(y==0, -1, y)
+    X = X[y!=2, :2]
+    y = y[y!=2]
     
     clf = HardMarginSVC(kernel='linear')
     clf.fit(X, y)
@@ -149,7 +153,7 @@ def main():
 
     # fig = plot_decision_regions(X, y, clf)
     fig, ax = plt.subplots()
-    ax.scatter(X[:, 0], X[:, 1], c=np.array([None, 'red', 'blue'])[y])
+    ax.scatter(X[:, 0], X[:, 1], c=np.array(['red', 'blue'])[y])
     ax.scatter(X[sv_ids, 0], X[sv_ids, 1], facecolors='None', edgecolors='black', linewidth=2, label='Support Vectors')
 
     grid1 = np.arange(X[:, 0].min()*0.9, X[:, 0].max()*1.1, 0.01)
