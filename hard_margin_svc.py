@@ -103,13 +103,13 @@ class HardMarginSVC:
         self.w = HardMarginSVC.compute_weights(self.p, X_sv, y_sv, a_sv, HardMarginSVC.linear_kernel)
 
     def predict(self, X):
-        return np.where(self.predict_val(X), self.map_orig[1], self.map_orig[-1])  
+        return np.where(self.predict_val(X)>0, self.map_orig[1], self.map_orig[-1])  
 
     def predict_val(self, X):
         return X @ self.w + self.b
 
     def predict_proba(self, X):
-        pass
+        return np.empty(0)
 
     # kernels
     @staticmethod
