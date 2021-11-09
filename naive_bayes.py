@@ -89,11 +89,12 @@ class NaiveBayes:
 
             preds.append(NaiveBayes.d(X, params_k, pi_k, self.k))
 
-        return np.array(preds)
+        return np.max(np.array(preds), axis=0)
 
     @staticmethod
     def d(X, params_k, pi_k, k):
-        return pi_k * np.prod([norm.pdf(X[:, p], params_k[p, 0], params_k[p, 1]) for p in range(X.shape[1])], axis=0)
+        return pi_k * np.prod([norm.pdf(X[:, p], params_k[p, 0], params_k[p, 1]) for p in range(X.shape[1])], axis=0) 
+                 
 
     @staticmethod
     def estimate_pi_k(y):

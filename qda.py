@@ -80,7 +80,7 @@ class QDA:
         return np.argmax(np.array(preds), axis=0)
 
     def predict_proba(self, X):
-        pass
+        return np.empty(0)
 
     @staticmethod
     def d(X, cov_k, mu_k, pi_k):
