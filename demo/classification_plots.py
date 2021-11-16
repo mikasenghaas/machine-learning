@@ -16,13 +16,14 @@ from qda import QDA
 from naive_bayes import NaiveBayes
 from knn import KNN
 from hard_margin_svc import HardMarginSVC
+from decision_tree import DecisionTree
 from plotting import plot_decision_regions
 
 SHOW_FIGURES = False
 SAVE_FIGURES = True
 
-names = ['LogisticRegresion', 'LDA', 'QDA', 'NaiveBayes', 'KNN', 'HardMarginSVC']
-clfs = [MultinomialLogisticRegression(), LDA(), QDA(), NaiveBayes(), KNN(), HardMarginSVC()]
+names = ['LogisticRegresion', 'LDA', 'QDA', 'NaiveBayes', 'HardMarginSVC', 'Decision Tree Classifier']
+clfs = [MultinomialLogisticRegression(), LDA(), QDA(), NaiveBayes(), HardMarginSVC(), DecisionTree()]
 N = len(clfs)
 
 X, y = load_iris(return_X_y = True)
