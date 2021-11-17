@@ -2,6 +2,7 @@ import math
 import numpy as np 
 
 from ._node import Node
+from ..utils import * 
 
 class DecisionTree:
     """
@@ -35,11 +36,10 @@ class DecisionTree:
         self.min_nodes_per_leaf = min_nodes_per_leaf
 
     def fit(self, X, y):
-        if len(X.shape) == 1:
-            self.X = X.reshape(-1, 1)
-        else:
-            self.X = np.array(X)
-        self.y = np.array(y)
+        self.X = validate_feature_matrix(X)
+        self.y = validate_target_vector(y)
+        check_consistent_length(X, y)
+
         self.n, self.p = self.X.shape
 
         # root node
@@ -49,6 +49,8 @@ class DecisionTree:
         self._split(self.root)
 
     def predict(self, X):
+        X = validate_feature_matrix(X)
+
         preds = []
         for x in X:
             #print('predict: ', x)
