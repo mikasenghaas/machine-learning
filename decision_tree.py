@@ -17,33 +17,82 @@ class Node:
 
         self.p = None # feature id 
         self.val = None # value to split at (default decision True, if data point lower than val -> in tree vis lower right branch)
-        self.gini = None
-        self.decision = lambda x: int(x[self.p] < self.val)  # lambda function 
+        self.loss = None
+        self.decision = lambda x: x[self.p] < self.val  # lambda function 
+
         self.split = [None, None] # amount of samples in split1 and split2values
-        self.next = [None, None] # reference to new splits
+        self.left = None # if decision evaluates False
+        self.right = None # if decision evaluates True
+
+        # leaf node
         self.type = _type
+        self.prediction = None
+
+    def is_leaf(self):
+        return self.type == 'leaf'
 
     def __str__(self):
-        return f'Decision Rule for {self.type.title()} Node at Depth {self.depth} (Gini: {round(self.gini, 2) if self.gini!=None else None}): X[{self.p}]<{self.val}; Splitting {self.size} values into {self.split}'
+        if self.type == 'root':
+            return 'Root Node at Depth 1 '\
+                   f'(Loss: {round(self.loss, 2) if self.loss!=None else None}): '\
+                   f'X[{self.p}] < {self.val}; Splitting {self.size} values in ' \
+                   f'[False=={self.split[0]}, True=={self.split[1]}]'
+
+        elif self.type == 'internal':
+            return f'Internal Node at Depth {self.depth} ' \
+                   f'(Loss: {round(self.loss, 2) if self.loss!=None else None}): '\
+                   f'X[{self.p}] < {self.val}; Splitting {self.size} values in '\
+                   f'[False=={self.split[0]}, True=={self.split[1]}]'
+
+        elif self.type == 'leaf':
+            return f'Leaf Node at Depth {self.depth} '\
+                   f'(Loss: {round(self.loss, 2) if self.loss!=None else None}): '\
+                   f'Prediction: {self.prediction}'
+
+
 
 class DecisionTree:
-    def __init__(self, max_depth=None):
+    """
+    Parent Class,not intended for use. Use children classes 
+    - DecisionTreeClassifier 
+    - DecisionTreeRegressor
+    """
+    def __init__(self, max_depth=None, max_nodes=None, max_leaf_nodes=None, min_nodes_per_leaf=1):
+
+        # training data
         self.X = None
         self.y = None
 
         # decision tree metrics
         self.root = None
-        if max_depth == None:
-            self.max_depth = math.inf
-        self.max_depth = max_depth
+        self.num_nodes = 0
+        self.num_leaf_nodes = 0
+
+        self.criterion = None
+
+        # stopping criterion
+        if max_depth == None: self.max_depth = math.inf 
+        else: self.max_depth = max_depth
+
+        if max_nodes == None: self.max_nodes = math.inf
+        else: self.max_nodes = max_nodes
+
+        if max_leaf_nodes == None: self.max_leaf_nodes = math.inf
+        else: self.max_leaf_nodes = max_leaf_nodes
+
+        self.min_nodes_per_leaf = min_nodes_per_leaf
 
     def fit(self, X, y):
-        self.X = np.array(X)
+        if len(X.shape) == 1:
+            self.X = X.reshape(-1, 1)
+        else:
+            self.X = np.array(X)
         self.y = np.array(y)
         self.n, self.p = self.X.shape
 
         # root node
-        self.root = Node(size=self.n, values=np.arange(self.n), depth=1)
+        self.root = Node(size=self.n, values=np.arange(self.n), depth=1, _type='root')
+        self.num_nodes += 1
 
         self._split(self.root)
 
@@ -53,29 +102,84 @@ class DecisionTree:
             #print('predict: ', x)
             curr = self.root
             #print(curr)
-            while curr.gini != 0 and curr.depth < self.max_depth:
-                curr = curr.next[curr.decision(x)]
-                #print(curr)
+            while not curr.is_leaf():
+                if curr.decision(x) == True:
+                    curr = curr.right
+                else: 
+                    curr = curr.left
 
-            pred = self._evaluate_leaf(curr, x)
-
-            preds.append(pred)
+            preds.append(curr.prediction)
 
         return np.array(preds)
 
+    def predict_proba(self, X):
+        # undefined for single decision tree
+        return np.empty(0)
+
+    def __len__(self):
+        return self.num_nodes
+
+    def __str__(self):
+        if self.num_nodes > 0:
+            curr = self.root
+            q = []
+            q.insert(0, curr)
+            depth = 0
+            s = ''
+
+            while q != []:
+                curr = q.pop()
+                if curr.depth > depth:
+                    depth = curr.depth
+                    s += f'\nCurrent Depth: {curr.depth}'
+                    s += f"{'='*15}\n"
+                s += curr.__str__() + '\n'
+
+                if curr.left != None:
+                    q.insert(0, curr.left)
+                if curr.right != None:
+                    q.insert(0, curr.right)
+        else: 
+            s = 'Decision Tree is not fitted'
+
+        return s
+
+    def _is_pure(self, node):
+        return self.criterion(self.y[node.values]) == 0
+
+    def _check_criterion(self, node):
+        depth_not_reached = node.depth < self.max_depth
+        max_nodes_not_reached = self.num_nodes < self.max_nodes
+        max_leaf_nodes_not_reached = self.num_leaf_nodes < self.max_leaf_nodes 
+        can_split = node.size > 1
+
+        return (depth_not_reached and 
+                max_nodes_not_reached and 
+                max_leaf_nodes_not_reached and 
+                can_split)
 
     def _split(self, curr):
         # curr is initialised as node with size, indices of values and depth
         # find best split
         X, y = self.X[curr.values], self.y[curr.values] # consider training samples that are in split of current node
 
-        gini, best_pair = self._best_split(X, y) # find best pair to split further
+        if self._best_split(X, y)[1] == None:
+            # exception if there does not exist a good split
+            # stop splitting and make node leaf
+            curr.type = 'leaf'
+            curr.prediction = self._evaluate_leaf(curr)
+            self.num_leaf_nodes += 1
+            return
+
+        loss, best_pair = self._best_split(X, y) # find best pair to split further
 
         # assign gini and split criterion
         p, val = best_pair
-        curr.gini = gini
+        curr.loss = loss
         curr.p = p 
         curr.val = val
+
+        print(curr)
 
         # compute new split
         train_decisions = []
@@ -84,8 +188,6 @@ class DecisionTree:
         train_decisions = np.array(train_decisions)
 
         curr.split = [curr.size - sum(train_decisions), sum(train_decisions)]
-
-        print(curr)
 
         # find new indices in splits
         next_values = [[], []]
@@ -98,76 +200,65 @@ class DecisionTree:
         #next_values = [np.array(next_values[0]), np.array(next_values[1])]
 
         # initialise new nodes
-        curr.next[0] = Node(size=curr.split[0], values=next_values[0], depth=curr.depth+1)
+        curr.left = Node(size=curr.split[0], values=next_values[0], depth=curr.depth+1)
+        self.num_nodes += 1
 
-        if DecisionTree.binary_gini(self.y[curr.next[0].values]) != 0 and curr.depth < self.max_depth:
-            self._split(curr.next[0])
+        # split further if not pure or pre-pruning stop criterion not reached
+        if not self._is_pure(curr.left) and self._check_criterion(curr.left):
+            self._split(curr.left)
         else:
-            curr.next[0].type = 'leaf'
+            # otherwise make leaf
+            curr.left.type = 'leaf'
+            curr.left.prediction = self._evaluate_leaf(curr.left)
+            self.num_leaf_nodes += 1
 
-        curr.next[1] = Node(size=curr.split[1], values=next_values[1], depth=curr.depth+1)
+        curr.right = Node(size=curr.split[1], values=next_values[1], depth=curr.depth+1)
+        self.num_nodes += 1
 
-        if DecisionTree.binary_gini(self.y[curr.next[1].values]) != 0 and curr.depth < self.max_depth:
-            self._split(curr.next[1])
+        if not self._is_pure(curr.right) and self._check_criterion(curr.right):
+            self._split(curr.right)
         else:
-            curr.next[1].type = 'leaf'
+            curr.right.type = 'leaf'
+            curr.right.prediction = self._evaluate_leaf(curr.right)
+            self.num_leaf_nodes += 1
 
 
-    def _best_split(self, X, y):
-        best_gini = 1
-        best_pair = None
-        for p in range(self.p):
-            sorted_vals = sorted(list(set(X[:, p])))
-            splits = [(sorted_vals[i]+sorted_vals[i+1]) / 2 for i in range(len(sorted_vals)-1)]
-            for val in splits: 
-                lower_val = X[:, p] < val
-                split1 = y[lower_val]
-                split2 = y[~lower_val]
-                # print(len(split1))
-                # print(len(split2))
-
-                gini1 = DecisionTree.binary_gini(split1)
-                gini2 = DecisionTree.binary_gini(split2)
-                # print('gini1 ', gini1)
-                # print('gini2 ', gini2)
-
-                weighted_gini = (gini1 * len(split1) + gini2 * len(split2)) / self.n
-                # print(weighted_gini)
-
-                if weighted_gini < best_gini:
-                    best_gini = weighted_gini
-                    best_pair = (p, val)
-
-        return best_gini, best_pair
     
-    def _evaluate_leaf(self, node, x):
-        if node.type == 'internal':
-            decision = node.decision(x)
-            #print(bool(decision))
-            final_region = node.next[decision]
-
-            #print(final_region.values)
-            labels = self.y[final_region.values]
-            #print(labels)
-            counter = Counter(labels)
-            #print(counter)
-
-            most_frequent_class = counter.most_common()[0][0]
-            #print('prediction: ', most_frequent_class)
-        elif node.type == 'leaf':
-            labels = self.y[node.values]
-            counter = Counter(labels)
-            most_frequent_class = counter.most_common()[0][0]
-            
+    """
+    def _evaluate_leaf(self, node):
+        labels = self.y[node.values]
+        counter = Counter(labels)
+        most_frequent_class = counter.most_common()[0][0]
 
         return most_frequent_class
 
 
+    # impurity measures (classification tree loss-metrics)
     @staticmethod
     def binary_gini(y):
         p = len(y[y==0]) / len(y)
         return 2 * p * ( 1 - p ) 
 
+    @staticmethod
+    def gini(y):
+        N = len(y)
+        counter = Counter(y)
+
+        ans = 0
+        for val in counter.values():
+            ans += val / N * ( 1 - val / N )
+        return ans
+
+    @staticmethod 
+    def entropy(y):
+        N = len(y)
+        counter = Counter(y)
+
+        ans = 0
+        for val in counter.values():
+            ans += val / N * np.log(val / N)
+        return -ans
+    """
 
 
 if __name__ == '__main__':
@@ -178,22 +269,15 @@ if __name__ == '__main__':
     
     #y = np.where(y==1, 0, 1) 
 
-    clf = DecisionTree(max_depth=3)
+    clf = DecisionTree(max_depth=None, criterion='gini')
+    print(clf)
     clf.fit(X, y)
-    #test = np.array([[0,0], [6.5, 2.5]])
+    print(clf)
+    print(len(clf))
+    print(clf.num_leaf_nodes)
 
     pred = clf.predict(X)
-    print(pred)
     print(accuracy_score(y, pred))
-
-
-    """
-    fig, ax = plt.subplots()
-    ax.scatter(X[y==0, 0], X[y==0, 1], c='red', label='Class 0')
-    ax.scatter(X[y==1, 0], X[y==1, 1], c='blue', label='Class 1')
-    ax.legend(loc='best')
-    #ax.scatter(test[:, 0], test[:, 1], )
-    """
 
     fig = plot_decision_regions(X, y, clf)
 
