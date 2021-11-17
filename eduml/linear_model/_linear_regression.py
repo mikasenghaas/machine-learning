@@ -1,11 +1,5 @@
 import numpy as np
-from matplotlib import pyplot as plt
-from sklearn.datasets import load_diabetes
-from loss import mse, mae
-from metrics import r2
-from sklearn.metrics import r2_score
-from icecream import ic
-from tqdm import tqdm
+from ..metrics import mse  
 
 class LinearRegression:
     """
@@ -105,6 +99,9 @@ class LinearRegression:
 
 
 def main():
+    from matplotlib import pyplot as plt
+    from sklearn.datasets import load_diabetes
+
     X, y = load_diabetes(return_X_y=True)
     #X = X[:, :5]
 

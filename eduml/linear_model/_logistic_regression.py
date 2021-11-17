@@ -1,13 +1,8 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from sklearn.datasets import load_iris
-from loss import mse, binary_cross_entropy, multiclass_cross_entropy
-#from plotting import plot_decision_regions
-from mlxtend.plotting import plot_decision_regions
-from icecream import ic
-from tqdm import tqdm
+from ..metrics import mse, binary_cross_entropy, cross_entropy
 
-class MultinomialLogisticRegression:
+class LogisticRegression:
     """
     Implementation of multinomial logistic regression, where p quantitative and qualitative
     features are used in multiclass classification setting, ie. to distinguish between k>=2 distinct classes.
@@ -40,7 +35,7 @@ class MultinomialLogisticRegression:
     .predict(X)             : Prediction from trained KNN model
     """
 
-    def __init__(self, loss=multiclass_cross_entropy, optim='GD'):
+    def __init__(self, loss=cross_entropy, optim='GD'):
         # data specific params
         self.X = None
         self.y = None
@@ -70,27 +65,27 @@ class MultinomialLogisticRegression:
         self.lr = lr
 
         self.w = np.random.rand(self.p + 1, self.k) # weights matrix
-        X = MultinomialLogisticRegression.add_bias(self.X) # add bias to feature matrix
+        X = LogisticRegression.add_bias(self.X) # add bias to feature matrix
         y = np.eye(self.k)[self.y] # one hot encoded target vector y 
 
         self.training_history = []
         for e in range(self.epochs):
             # update model params
-            pred = MultinomialLogisticRegression.f(X, self.w)
+            pred = LogisticRegression.f(X, self.w)
             loss = self.loss(y, pred)
             self.training_history.append(loss)
 
             # update weights
-            self.w -= self.lr * MultinomialLogisticRegression.g(X, y, pred)
+            self.w -= self.lr * LogisticRegression.g(X, y, pred)
 
 
     def predict(self, X):
-        X = MultinomialLogisticRegression.add_bias(X)
-        return np.argmax(MultinomialLogisticRegression.f(X, self.w), axis=1)
+        X = LogisticRegression.add_bias(X)
+        return np.argmax(LogisticRegression.f(X, self.w), axis=1)
 
     def predict_proba(self, X):
-        X = MultinomialLogisticRegression.add_bias(X)
-        return np.max(MultinomialLogisticRegression.f(X, self.w), axis=1)
+        X = LogisticRegression.add_bias(X)
+        return np.max(LogisticRegression.f(X, self.w), axis=1)
 
     @staticmethod
     def f(X, w):
@@ -112,11 +107,13 @@ class MultinomialLogisticRegression:
 
 
 def main():
+    from sklearn.datasets import load_iris
+    from mlxtend.plotting import plot_decision_regions
     # k=3 classification
     X, y = load_iris(return_X_y=True)
     X = X[:, :2]
 
-    clf = MultinomialLogisticRegression()
+    clf = LogisticRegression()
     clf.fit(X, y, epochs=10000, lr=0.1)
 
     #plot_decision_regions(X, y, clf, mesh_size=0.1)

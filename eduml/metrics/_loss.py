@@ -16,5 +16,5 @@ def zero_one_loss(y, p):
 def binary_cross_entropy(y, p):
     return - (1 / len(y)) * np.sum(y * np.log(p) + ((1+y) * np.log(1-p)))
 
-def multiclass_cross_entropy(y, p):
+def cross_entropy(y, p):
     return - (1 / y.shape[0]) * np.sum(y * np.log(p))

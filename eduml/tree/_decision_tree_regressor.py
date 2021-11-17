@@ -1,15 +1,7 @@
 import math
-from collections import Counter
 import numpy as np 
-from matplotlib import pyplot as plt
-from mlxtend.plotting import plot_decision_regions
-from icecream import ic
 
-from sklearn import datasets
-from sklearn import tree
-from sklearn.metrics import *
-
-from decision_tree import DecisionTree
+from ._decision_tree import DecisionTree
 
 class DecisionTreeRegressor(DecisionTree):
     def __init__(self, criterion='mse', 

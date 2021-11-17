@@ -1,55 +1,7 @@
 import math
-from collections import Counter
 import numpy as np 
-from matplotlib import pyplot as plt
-from mlxtend.plotting import plot_decision_regions
-from icecream import ic
 
-from sklearn import datasets
-from sklearn import tree
-from sklearn.metrics import *
-
-class Node:
-    def __init__(self, size=None, values=None, depth=None, _type='internal'):
-        self.size = size # number of samples to be split in the node
-        self.depth = depth # depth of node in decision tree
-        self.values = values # indices of the sample to be split in the node
-
-        self.p = None # feature id 
-        self.val = None # value to split at (default decision True, if data point lower than val -> in tree vis lower right branch)
-        self.loss = None
-        self.decision = lambda x: x[self.p] < self.val  # lambda function 
-
-        self.split = [None, None] # amount of samples in split1 and split2values
-        self.left = None # if decision evaluates False
-        self.right = None # if decision evaluates True
-
-        # leaf node
-        self.type = _type
-        self.prediction = None
-
-    def is_leaf(self):
-        return self.type == 'leaf'
-
-    def __str__(self):
-        if self.type == 'root':
-            return 'Root Node at Depth 1 '\
-                   f'(Loss: {round(self.loss, 2) if self.loss!=None else None}): '\
-                   f'X[{self.p}] < {self.val}; Splitting {self.size} values in ' \
-                   f'[False=={self.split[0]}, True=={self.split[1]}]'
-
-        elif self.type == 'internal':
-            return f'Internal Node at Depth {self.depth} ' \
-                   f'(Loss: {round(self.loss, 2) if self.loss!=None else None}): '\
-                   f'X[{self.p}] < {self.val}; Splitting {self.size} values in '\
-                   f'[False=={self.split[0]}, True=={self.split[1]}]'
-
-        elif self.type == 'leaf':
-            return f'Leaf Node at Depth {self.depth} '\
-                   f'(Loss: {round(self.loss, 2) if self.loss!=None else None}): '\
-                   f'Prediction: {self.prediction}'
-
-
+from ._node import Node
 
 class DecisionTree:
     """
@@ -179,7 +131,6 @@ class DecisionTree:
         curr.p = p 
         curr.val = val
 
-        print(curr)
 
         # compute new split
         train_decisions = []
@@ -221,45 +172,6 @@ class DecisionTree:
             curr.right.type = 'leaf'
             curr.right.prediction = self._evaluate_leaf(curr.right)
             self.num_leaf_nodes += 1
-
-
-    
-    """
-    def _evaluate_leaf(self, node):
-        labels = self.y[node.values]
-        counter = Counter(labels)
-        most_frequent_class = counter.most_common()[0][0]
-
-        return most_frequent_class
-
-
-    # impurity measures (classification tree loss-metrics)
-    @staticmethod
-    def binary_gini(y):
-        p = len(y[y==0]) / len(y)
-        return 2 * p * ( 1 - p ) 
-
-    @staticmethod
-    def gini(y):
-        N = len(y)
-        counter = Counter(y)
-
-        ans = 0
-        for val in counter.values():
-            ans += val / N * ( 1 - val / N )
-        return ans
-
-    @staticmethod 
-    def entropy(y):
-        N = len(y)
-        counter = Counter(y)
-
-        ans = 0
-        for val in counter.values():
-            ans += val / N * np.log(val / N)
-        return -ans
-    """
-
 
 if __name__ == '__main__':
     cols = np.array(['red', 'blue'])

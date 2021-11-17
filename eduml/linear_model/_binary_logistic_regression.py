@@ -1,13 +1,8 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from sklearn.datasets import load_iris
-from loss import mse, binary_cross_entropy
-from plotting import plot_decision_regions
-from mlxtend.plotting import plot_decision_regions
-from icecream import ic
-from tqdm import tqdm
+from ..metrics import mse, binary_cross_entropy
 
-class LogisticRegression:
+class BinaryLogisticRegression:
     """
     Implementation of a simple logistici regression, where p quantitative and qualitative
     features are used in binary classification setting, ie. to distinguish between k=2 distinct classes.
@@ -115,6 +110,9 @@ class LogisticRegression:
 
 
 def main():
+    from sklearn.datasets import load_iris
+    from mlxtend.plotting import plot_decision_regions
+
     X, y = load_iris(return_X_y=True)
     # make it a binary classification
     X = X[y!=2, :2]

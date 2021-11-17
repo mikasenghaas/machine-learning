@@ -1,9 +1,4 @@
 import numpy as np
-from matplotlib import pyplot as plt
-from sklearn.datasets import load_iris
-from mlxtend.plotting import plot_decision_regions
-from icecream import ic
-from tqdm import tqdm
 
 class QDA:
     """
@@ -110,7 +105,12 @@ class QDA:
         return self.n
 
 
-def main():
+
+if __name__ == '__main__':
+    from matplotlib import pyplot as plt
+    from sklearn.datasets import load_iris
+    from mlxtend.plotting import plot_decision_regions
+
     X, y = load_iris(return_X_y=True)
     X = X[:, :2]
 
@@ -122,7 +122,3 @@ def main():
     # plot_decision_regions(X, y, clf, mesh_size=0.1)
     fig = plot_decision_regions(X, y, clf)
     plt.show()
-
-if __name__ == '__main__':
-    main()
-

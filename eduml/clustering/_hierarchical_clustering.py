@@ -1,8 +1,4 @@
 import numpy as np 
-from sklearn import datasets
-from matplotlib import pyplot as plt
-from icecream import ic
-from tqdm import tqdm
 
 class BottomUpHierachicalClustering:
     """
@@ -111,7 +107,11 @@ class BottomUpHierachicalClustering:
         x, y = np.array(x), np.array(y)
         return np.sqrt(np.sum((y-x)**2))
 
-def main():
+
+if __name__ == '__main__':
+    from sklearn import datasets
+    from matplotlib import pyplot as plt
+
     SHOW_FIGURES = True
 
     colors = np.array(['red', 'blue'])
@@ -144,6 +144,3 @@ def main():
 
     if SHOW_FIGURES:
         plt.show()
-
-if __name__ == '__main__':
-    main()

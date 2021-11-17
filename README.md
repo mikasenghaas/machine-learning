@@ -1,6 +1,6 @@
-#Educational Machine Learning (EML) module for Python
----
+# Educational Machine Learning (EDUML) module for Python
 ## jonas-mika/edu-machine-learning
+---
 
 `edu-machine-learning` (**eduml**) is a python module integrating classical 
 machine learning algorithms - covered in the course _Machine Learning_ as 

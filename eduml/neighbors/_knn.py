@@ -1,10 +1,8 @@
 import numpy as np
-from matplotlib import pyplot as plt
-from plotting import plot_decision_regions
-from sklearn.datasets import load_iris
 from sklearn.neighbors import BallTree
+from sklearn.datasets import load_iris
 from scipy.stats import mode
-from icecream import ic
+
 
 class KNN:
     """
@@ -119,7 +117,10 @@ class KNN:
         return self.n
 
 
-def main():
+if __name__ == '__main__':
+    from matplotlib import pyplot as plt
+    from plotting import plot_decision_regions
+
     ks = [1, 3, 5, 10]
     fig, ax = plt.subplots(ncols=len(ks))
     X, y = load_iris(return_X_y=True)
@@ -131,7 +132,3 @@ def main():
 
         plot_decision_regions(X, y, knn, mesh_size=0.1)
     plt.show()
-
-
-if __name__ == '__main__':
-    main()

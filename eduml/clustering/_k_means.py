@@ -1,10 +1,4 @@
 import numpy as np 
-from matplotlib import pyplot as plt
-from icecream import ic
-
-np.random.seed(0)
-
-show_figures = True
 
 class KMeans:
     def __init__(self, k=2):
@@ -48,10 +42,14 @@ class KMeans:
         return np.sqrt(np.sum((y-x)**2))
 
 
-def main():
+
+
+if __name__ == '__main__':
+    from matplotlib import pyplot as plt
+
     colors = np.array(['red', 'blue'])
     mean0 = [2,2]
-    mean1 = [3,3]
+    mean1 = [6,6]
     cov = [[0.5, 0],[0,0.5]]
     class0 = np.random.multivariate_normal(mean0, cov, 100)
     class1 = np.random.multivariate_normal(mean1, cov, 100)
@@ -76,9 +74,4 @@ def main():
         a.set_ylabel('X2')
 
 
-    if show_figures:
-        plt.show()
-
-
-if __name__ == '__main__':
-    main()
+    plt.show()

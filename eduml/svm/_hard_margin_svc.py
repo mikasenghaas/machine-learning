@@ -33,7 +33,7 @@ class HardMarginSVC:
     .predict(X)             : Prediction from trained KNN model
     """
 
-    def __init__(self, kernel='linear'):
+    def __init__(self):
         # data specific params
         self.X = None
         self.y = None
@@ -42,7 +42,6 @@ class HardMarginSVC:
 
         self.mapping = {}
 
-        self.kernel = kernel
         self.support_idx = None
         self.w = None
         self.b = None
@@ -60,10 +59,7 @@ class HardMarginSVC:
         K = np.zeros((self.n, self.n))
         for i in range(self.n):
             for j in range(self.n):
-                if self.kernel == 'linear':
-                    K[i][j] = HardMarginSVC.linear_kernel(self.X[i], self.X[j])
-                else:
-                    print('Kernel has not been implemented yet.')
+                K[i][j] = self.X[i] @ self.X[j] # equivalent to using linear kernel
 
         def loss(a, *args):
             """Evaluate the negative of the dual function at `a`.
@@ -99,8 +95,8 @@ class HardMarginSVC:
         y_sv = y[self.support_idx]
         a_sv = a[self.support_idx]
 
-        self.b = HardMarginSVC.compute_b(X_sv, y_sv, a_sv, HardMarginSVC.linear_kernel)
-        self.w = HardMarginSVC.compute_weights(self.p, X_sv, y_sv, a_sv, HardMarginSVC.linear_kernel)
+        self.b = HardMarginSVC.compute_b(X_sv, y_sv, a_sv)
+        self.w = HardMarginSVC.compute_weights(self.p, X_sv, y_sv, a_sv)
 
     def predict(self, X):
         return np.where(self.predict_val(X)>0, self.map_orig[1], self.map_orig[-1])  
@@ -118,7 +114,7 @@ class HardMarginSVC:
 
     # compute model params
     @staticmethod
-    def compute_weights(p, X_sv, y_sv, a_sv, kernel=None):
+    def compute_weights(p, X_sv, y_sv, a_sv):
         w = np.zeros(p)
         N = len(a_sv)
         for i in range(N):
@@ -126,13 +122,13 @@ class HardMarginSVC:
         return w
 
     @staticmethod
-    def compute_b(X_sv, y_sv, a_sv, kernel):
+    def compute_b(X_sv, y_sv, a_sv):
         # input only consist of support vectors (X: support vector features, y: support vector labels, a: ...)
         N = len(a_sv)
         b = 0
         for i in range(N):
             b += y_sv[i]
-            b -= np.sum(a_sv * y_sv * kernel(X_sv, X_sv[i]))
+            b -= np.sum(a_sv * y_sv * (X_sv @ X_sv[i]))
         return b / N
 
     def __len__(self):
@@ -146,7 +142,7 @@ def main():
     X = X[y!=2, :2]
     y = y[y!=2]
     
-    clf = HardMarginSVC(kernel='linear')
+    clf = HardMarginSVC()
     clf.fit(X, y)
 
     sv_ids = clf.support_idx
