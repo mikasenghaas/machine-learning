@@ -25,7 +25,7 @@ def plot_1d_decision_regions(x, y, model, mesh_size=0.01, figsize=(8,6), title='
     xx0, xx1 = np.meshgrid(x_range, y_range)
     xx = np.reshape(np.stack((xx0.ravel(),xx1.ravel()),axis=1),(-1,2))
 
-    pred_y = [mapping[trg] for trg in model.predict(xx[:,0].reshape(-1, 1))]
+    pred_y = [mapping[trg] for trg in model.predict(xx[:,0])]
     ax.scatter(xx[:, 0], xx[:, 1], c=colormap[pred_y], alpha=0.3)
 
     for k, color, label in zip(np.unique(y), colormap, labels):
