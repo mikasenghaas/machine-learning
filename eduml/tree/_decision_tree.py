@@ -10,11 +10,10 @@ class DecisionTree:
     - DecisionTreeClassifier 
     - DecisionTreeRegressor
     """
-    def __init__(self, max_depth=None, max_nodes=None, max_leaf_nodes=None, min_nodes_per_leaf=1):
-
-        # training data
-        self.X = None
-        self.y = None
+    def __init__(self, max_depth=None, algorithm='greedy', max_features='auto', random_state=None):
+        # generic data
+        self.X = self.y = self.n = self.p = None
+        self.fitted = False
 
         # decision tree metrics
         self.root = None
@@ -22,18 +21,16 @@ class DecisionTree:
         self.num_leaf_nodes = 0
 
         self.criterion = None
+        self.max_features = max_features # the number of features to search for in best split (if None: entire feature space)
+        self.algorithm = algorithm
 
         # stopping criterion
         if max_depth == None: self.max_depth = math.inf 
         else: self.max_depth = max_depth
 
-        if max_nodes == None: self.max_nodes = math.inf
-        else: self.max_nodes = max_nodes
+        # set random seed
+        np.random.seed(random_state)
 
-        if max_leaf_nodes == None: self.max_leaf_nodes = math.inf
-        else: self.max_leaf_nodes = max_leaf_nodes
-
-        self.min_nodes_per_leaf = min_nodes_per_leaf
 
     def fit(self, X, y):
         self.X = validate_feature_matrix(X)
@@ -42,29 +39,38 @@ class DecisionTree:
 
         self.n, self.p = self.X.shape
 
+        if isinstance(self.max_features, int):
+            self.max_features = self.max_features
+        elif isinstance(self.max_features, float):
+            self.max_features = int(np.ceil(self.p * self.max_features))
+        elif self.max_features == 'auto':
+            self.max_features = int(np.ceil(np.sqrt(self.p)))
+        elif self.max_features == 'log2':
+            self.max_features = int(np.ceil(np.log2(self.p)))
+
         # root node
         self.root = Node(size=self.n, values=np.arange(self.n), depth=1, _type='root')
         self.num_nodes += 1
 
         self._split(self.root)
+        self.fitted = True
 
     def predict(self, X):
         X = validate_feature_matrix(X)
+        n = X.shape[0]
 
-        preds = []
-        for x in X:
-            #print('predict: ', x)
+        preds = np.empty(n) 
+        for i in range(n):
             curr = self.root
-            #print(curr)
             while not curr.is_leaf():
-                if curr.decision(x) == True:
+                if curr.decision(X[i]) == True:
                     curr = curr.right
                 else: 
                     curr = curr.left
 
-            preds.append(curr.prediction)
+            preds[i] = curr.prediction
 
-        return np.array(preds)
+        return preds
 
     def predict_proba(self, X):
         # undefined for single decision tree
@@ -74,7 +80,7 @@ class DecisionTree:
         return self.num_nodes
 
     def __str__(self):
-        if self.num_nodes > 0:
+        if self.fitted:
             curr = self.root
             q = []
             q.insert(0, curr)
@@ -102,37 +108,81 @@ class DecisionTree:
         return self.criterion(self.y[node.values]) == 0
 
     def _check_criterion(self, node):
-        depth_not_reached = node.depth < self.max_depth
-        max_nodes_not_reached = self.num_nodes < self.max_nodes
-        max_leaf_nodes_not_reached = self.num_leaf_nodes < self.max_leaf_nodes 
-        can_split = node.size > 1
+        depth_not_reached = node.depth <= self.max_depth
+        # max_nodes_not_reached = self.num_nodes < self.max_nodes
+        #max_leaf_nodes_not_reached = self.num_leaf_nodes < self.max_leaf_nodes 
+        can_split = len(np.unique(self.X[node.values], axis=0)) > 1
 
         return (depth_not_reached and 
-                max_nodes_not_reached and 
-                max_leaf_nodes_not_reached and 
+                # max_nodes_not_reached and 
+                #max_leaf_nodes_not_reached and 
                 can_split)
+
+    def _best_split(self, X, y):
+        if self.algorithm == 'greedy':
+            loss = math.inf 
+            best_pair = None 
+            feature_space = np.random.choice(list(range(self.p)), size=self.max_features, replace=False)
+
+            for p in feature_space:
+                sorted_vals = sorted(list(set(X[:, p])))
+                splits = [(sorted_vals[i]+sorted_vals[i+1]) / 2 for i in range(len(sorted_vals)-1)]
+                for val in splits: 
+                    lower_val = X[:, p] < val
+                    split1 = y[lower_val]
+                    split2 = y[~lower_val]
+
+                    split1_impurity = self.criterion(split1)
+                    split2_impurity = self.criterion(split2)
+
+                    weighted_impurity = (split1_impurity * len(split1) + split2_impurity * len(split2)) / self.n
+
+                    if weighted_impurity < loss:
+                        loss = weighted_impurity
+                        best_pair = (p, val)
+
+            return loss, best_pair
+
+        elif self.algorithm == 'random':
+            feature_space = np.random.choice(list(range(self.p)), size=self.max_features, replace=False)
+
+            p = np.random.choice(feature_space)
+
+            sorted_vals = sorted(list(set(X[:, p])))
+            while len(sorted_vals) <= 1:
+                p = np.random.choice(feature_space)
+
+                sorted_vals = sorted(list(set(X[:, p])))
+
+            splits = [(sorted_vals[i]+sorted_vals[i+1]) / 2 for i in range(len(sorted_vals)-1)]
+
+            val = np.random.choice(splits)
+
+            lower_val = X[:, p] < val
+            split1 = y[lower_val]
+            split2 = y[~lower_val]
+
+            split1_impurity = self.criterion(split1)
+            split2_impurity = self.criterion(split2)
+
+            weighted_impurity = (split1_impurity * len(split1) + split2_impurity * len(split2)) / self.n
+
+            return weighted_impurity, (p, val)
+
+
 
     def _split(self, curr):
         # curr is initialised as node with size, indices of values and depth
         # find best split
         X, y = self.X[curr.values], self.y[curr.values] # consider training samples that are in split of current node
 
-        if self._best_split(X, y)[1] == None:
-            # exception if there does not exist a good split
-            # stop splitting and make node leaf
-            curr.type = 'leaf'
-            curr.prediction = self._evaluate_leaf(curr)
-            self.num_leaf_nodes += 1
-            return
-
         loss, best_pair = self._best_split(X, y) # find best pair to split further
 
-        # assign gini and split criterion
+        # assign loss and split criterion
         p, val = best_pair
         curr.loss = loss
         curr.p = p 
         curr.val = val
-
 
         # compute new split
         train_decisions = []
@@ -174,25 +224,3 @@ class DecisionTree:
             curr.right.type = 'leaf'
             curr.right.prediction = self._evaluate_leaf(curr.right)
             self.num_leaf_nodes += 1
-
-if __name__ == '__main__':
-    cols = np.array(['red', 'blue'])
-    X, y = datasets.load_iris(return_X_y=True)
-    X = X[y!=2, :2]
-    y = y[y!=2]
-    
-    #y = np.where(y==1, 0, 1) 
-
-    clf = DecisionTree(max_depth=None, criterion='gini')
-    print(clf)
-    clf.fit(X, y)
-    print(clf)
-    print(len(clf))
-    print(clf.num_leaf_nodes)
-
-    pred = clf.predict(X)
-    print(accuracy_score(y, pred))
-
-    fig = plot_decision_regions(X, y, clf)
-
-    plt.show()
