@@ -1,7 +1,7 @@
 import numpy as np 
 from scipy.stats import mode
 
-from sklearn.tree import DecisionTreeClassifier # replace with eduml at some point
+from ..tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
 
 from ..utils import *
@@ -51,8 +51,9 @@ class BaggingClassifier:
         self.model = model
         self.m = m
         self.sample_size = sample_size
-        self.clfs = [None] * self.m
+        self.clfs = [self.model] * self.m
         self.bootstrap = bootstrap 
+
         if oob:
             self.compute_oob = True
             self.oob = 0
@@ -75,7 +76,7 @@ class BaggingClassifier:
             X, y = self.X[idx], self.y[idx] # use sampled indices to mask data split
 
             # train classifier on data split
-            self.clfs[i] = self.model.fit(X, y)
+            self.clfs[i].fit(X, y)
 
             if self.compute_oob: 
                 oob_idx = list(set(range(self.n)) - set(idx))
