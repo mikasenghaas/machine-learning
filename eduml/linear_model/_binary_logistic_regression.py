@@ -1,13 +1,17 @@
 import numpy as np
-from matplotlib import pyplot as plt
-from ..metrics import mse, binary_cross_entropy
+from math import inf
+
+from ..metrics import mse, cross_entropy
+from ..utils import validate_feature_matrix, validate_target_vector, check_consistent_length
 
 class BinaryLogisticRegression:
     """
-    Implementation of a simple logistici regression, where p quantitative and qualitative
-    features are used in binary classification setting, ie. to distinguish between k=2 distinct classes.
+    Implementation of a simple logistic regression, where p quantitative and qualitative
+    features are used in binary classification setting to distinguish between k=2 distinct classes.
     In logistic regression the logistic function f(x) = 1 / (1 + e^(-x)) is used to model the conditional 
-    probability P(Y|X) directly. The logistic function is optimised using vanilla GD.
+    probability P(Y|X) directly. The logistic function is optimised using GD on call to .fit(). The method
+    converges by default, by the training loop can manually be adjusted through the epochs and learning rate
+    arguments.
 
     Running Time depends on number of features (p) and number of epochs (e):
 
@@ -35,95 +39,84 @@ class BinaryLogisticRegression:
     .predict(X)             : Prediction from trained KNN model
     """
 
-    def __init__(self, db=0.5, loss=mse, optim='GD'):
-        # data specific params
-        self.X = None
-        self.y = None
-        self.n = None
-        self.p = None
+    def __init__(self, db=0.5, loss=cross_entropy, optim='GD'):
+        # generic attributes
+        self.X = self.y = self.n = self.p = self.k = None
+        self.fitted = False
 
-        # training
+        # gradient descent training
         self.optim = optim
         self.loss = loss
         self.epochs = None 
         self.lr = None
+        self.training_history = []
 
         # model parameters
         self.weights = None
+        self.bias = None
         self.db = db
 
-    def fit(self, X, y, cross_validate=False, epochs=500, lr=0.01):
-        self.X = np.array(X)
-        if len(self.X.shape) == 1:
-            self.X = self.X.reshape(-1, 1)
 
-        self.y = np.array(y).reshape(-1, 1)
+    def fit(self, X, y, epochs=10000, lr=0.01, verbose=False):
+        self.X = validate_feature_matrix(X)
+        self.y = validate_target_vector(y)
+        check_consistent_length(self.X, self.y)
         self.n, self.p = self.X.shape
+        self.k = len(np.unique(self.y))
 
-        assert len(np.unique(self.y)) == 2, 'Simple Logistic Regression only supports binary classification. Use Multinomial Linear Regression for Multiclass Classification'
+        assert self.k == 2, f'Simple Logistic Regression only supports binary classification.'\
+                             'Use  LogisticRegression for multiclass classification.'
 
-        self.epochs = epochs
+        self.epochs = epochs if epochs != None else inf
         self.lr = lr
 
-        self.w = np.random.rand(self.p + 1).reshape(-1, 1)
-        X = LogisticRegression.add_bias(self.X)
+        self.weights = np.random.rand(self.p)
+        self.bias = np.random.rand()
 
-        self.training_history = []
-
-        for e in range(self.epochs):
+        e = 0
+        while True:
             # update model params
-            pred = LogisticRegression.f(X, self.w).reshape(-1, 1)
+            e += 1
+            pred = self.predict(self.X)
             loss = self.loss(self.y, pred)
             self.training_history.append(loss)
 
             # update weights
-            self.w -= self.lr * LogisticRegression.g(X, self.y, pred)
+            self.weights -= self.lr * self._gradient_weights(pred)
+            self.bias -= self.lr * self._gradient_bias(pred)
+
+            if e > 1:
+                improvement = np.abs(self.training_history[-1] - self.training_history[-2]) 
+            else:
+                improvement = 1
+
+            # print training updates
+            if verbose:
+                if (e+1) % 50 == 0:
+                    print(f'Epoch {e+1}: Training Loss: {loss}, Improvement: {improvement}')
+
+            # stop criterion
+            if e >= self.epochs:
+                break
+
+        self.fitted = True
 
 
     def predict(self, X):
-        if len(X.shape) == 1:
-            X = X.reshape(-1, 1)
-        X = LogisticRegression.add_bias(X)
-        return (LogisticRegression.f(X, self.w) > self.db).astype(int)
+        return (self.predict_proba(X) > self.db).astype(int)
 
     def predict_proba(self, X):
-        if len(X.shape) == 1:
-            X = X.reshape(-1, 1)
-        X = LogisticRegression.add_bias(X)
-        return LogisticRegression.f(X, self.w)
+        X = validate_feature_matrix(X)
 
-    @staticmethod
-    def f(X, w):
-        z = X @ w
-        return 1 / ( 1 + np.exp(-z) ) 
+        z = X @ self.weights + self.bias
 
-    @staticmethod
-    def g(X, y, pred):
-        return 2 / len(y) * X.T @ (pred - y)
+        return 1 / (1 + np.exp(-z))
 
-    @staticmethod
-    def add_bias(X):
-        return np.concatenate((np.ones((X.shape[0], 1)), X), axis=1)
+    def _gradient_weights(self, pred):
+        return 2 / len(self.y) * self.X.T @ (pred - self.y)
+
+    def _gradient_bias(self, pred):
+        return 2 / len(self.y) * np.sum(pred - self.y)
 
     def __len__(self):
         return self.n
-
-
-def main():
-    from sklearn.datasets import load_iris
-    from mlxtend.plotting import plot_decision_regions
-
-    X, y = load_iris(return_X_y=True)
-    # make it a binary classification
-    X = X[y!=2, :2]
-    y = y[y!=2]
-
-    clf = LogisticRegression(loss=binary_cross_entropy, db=0.5)
-    clf.fit(X, y, epochs=10000, lr=0.1)
-    
-    # plot_decision_regions(X, y, clf, mesh_size=0.1)
-    fig = plot_decision_regions(X, y, clf)
-    plt.show()
-
-if __name__ == '__main__':
-    main()
