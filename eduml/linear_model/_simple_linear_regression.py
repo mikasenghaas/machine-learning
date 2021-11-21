@@ -1,7 +1,6 @@
 import numpy as np
-from matplotlib import pyplot as plt
-from sklearn.datasets import load_diabetes
-from icecream import ic
+
+from ..utils import validate_feature_matrix, validate_target_vector, check_consistent_length
 
 class SimpleLinearRegression:
     """
@@ -24,7 +23,7 @@ class SimpleLinearRegression:
     Attributes:
     ---
     n | int                 : Number of observed datapoints in training set
-    p | int                 : Number of features in training set == must be 1
+    p | int                 : Number of features in training set; must be 1
     X | np.array(n,p)       : 2D-Array of feature matrix
     Y | np.array(n,)        : 1D-Array of target vector
 
@@ -34,55 +33,35 @@ class SimpleLinearRegression:
     .predict(X)             : Prediction from trained KNN model
     """
 
-    def __init__(self, K=5, algorithm='brute'):
-        # data specific params
-        self.X = None
-        self.y = None
-        self.n = None
-        self.p = None
+    def __init__(self):
+        # generic attribute 
+        self.X = self.y = self.n = self.p = None
+        self.fitted = None
 
         # model parameters
-        self.weights = None
+        self.slope = None
+        self.bias = None
 
-    def fit(self, X, y, cross_validate=False):
-        self.X = np.array(X).reshape(-1, 1)
-        self.y = np.array(y).reshape(-1, 1)
+    def fit(self, X, y):
+        self.X = validate_feature_matrix(X)
+        #self.X = self.X.reshape(-1)
+        self.y = validate_target_vector(y)
+        check_consistent_length(self.X, self.y)
         self.n, self.p = self.X.shape
 
         assert self.p == 1, 'Cannot perform simple linear regression on more than one feature'
+        
+        mean_x = np.mean(self.X)
+        mean_y = np.mean(self.y)
+        
+        self.slope = np.sum( (self.X.reshape(-1) - mean_x) * (self.y - mean_y) ) / np.sum((self.X - mean_x) ** 2)
+        self.bias =  mean_y - self.slope * mean_x
 
-        slope = np.sum((self.X - np.mean(self.X)) * (self.y - np.mean(self.y))) / np.sum((self.X - np.mean(X)) ** 2)
-        bias =  np.mean(y) - slope * np.mean(self.X)
-
-        self.w = np.array([bias, slope])
-
+        self.fitted = True
 
     def predict(self, X):
-        X = np.vstack((np.ones(X.shape[0]), X)).T
-        return SimpleLinearRegression.f(X, self.w)
-
-
-    @staticmethod
-    def f(X, w):
-        return X @ w
+        X = validate_feature_matrix(X)
+        return (X * self.slope) + self.bias
 
     def __len__(self):
         return self.n
-
-
-def main():
-    X, y = load_diabetes(return_X_y=True)
-    i = 2
-
-    reg = SimpleLinearRegression()
-    reg.fit(X[:,i], y)
-
-    fig, ax = plt.subplots()
-    ax.scatter(X[:,i], y, s=5)
-    xs = np.linspace(min(X[:, i]), max(X[:, i]), 100)
-    ax.plot(xs, reg.predict(xs), color='red')
-
-    plt.show()
-
-if __name__ == '__main__':
-    main()

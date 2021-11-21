@@ -1,11 +1,14 @@
 import numpy as np
+from math import inf
+
 from ..metrics import mse  
+from ..utils import validate_feature_matrix, validate_target_vector, check_consistent_length
 
 class LinearRegression:
     """
     Implementation of a linear regression, where p quantitative and qualitative
-    feature predict a single quantitative response. Optimisation through GD 
-    algorithm
+    feature predict a single quantitative response. Optimisation until gradient
+    descent converges or fixed number of epochs is reached.
 
     Running Time depends on number of features (p), epochs (e):
 
@@ -35,91 +38,69 @@ class LinearRegression:
 
     def __init__(self, loss=mse, optim='GD'):
         # data specific params
-        self.X = None
-        self.y = None
-        self.n = None
-        self.p = None
+        self.X = self.y = self.n = self.p = None
+        self.fitted = False
 
-        # training
+        # gradient descent training
         self.optim = optim
         self.loss = loss
         self.epochs = None 
         self.lr = None
+        self.training_history = []
 
         # model parameters
         self.weights = None
+        self.bias = None
 
-    def fit(self, X, y, cross_validate=False, epochs=500, lr=0.01):
-        self.X = np.array(X)
-        if len(self.X.shape) == 1:
-            self.X = self.X.reshape(-1, 1)
-
-        self.y = np.array(y).reshape(-1, 1)
+    def fit(self, X, y, epochs=None, lr=0.01, verbose=False):
+        self.X = validate_feature_matrix(X)
+        self.y = validate_target_vector(y)
+        check_consistent_length(self.X, self.y)
         self.n, self.p = self.X.shape
 
-        self.epochs = epochs
+        self.epochs = epochs if epochs != None else inf
         self.lr = lr
 
+        self.weights = np.random.rand(self.p)
+        self.bias = np.random.rand()
 
-        self.w = np.random.rand(self.p + 1).reshape(-1, 1)
-        X = np.concatenate((np.ones((self.X.shape[0], 1)), self.X), axis=1)
-
-        self.training_history = []
-
-        for e in range(self.epochs):
+        e = 0
+        while True:
             # update model params
-            pred = LinearRegression.f(X, self.w).reshape(-1, 1)
+            e += 1
+            pred = self.predict(self.X)
             loss = self.loss(self.y, pred)
             self.training_history.append(loss)
 
             # update weights
-            self.w -= self.lr * LinearRegression.g(X, self.y, pred)
+            self.weights -= self.lr * self._gradient_weights(pred)
+            self.bias -= self.lr * self._gradient_bias(pred)
+
+            if e > 1:
+                improvement = np.abs(self.training_history[-1] - self.training_history[-2]) 
+            else:
+                improvement = 1
 
             # print training updates
-# if (e+1) % 10 == 0:
-# print(f'--> Epoch {e+1}: Training Loss: {loss}')
+            if verbose:
+                if (e+1) % 50 == 0:
+                    print(f'Epoch {e+1}: Training Loss: {loss}, Improvement: {improvement}')
 
+            # stop criterion
+            if improvement < 0.0001 or e >= self.epochs:
+                break
+
+        self.fitted = True
 
     def predict(self, X):
-        if len(X.shape) == 1:
-            X = X.reshape(-1, 1)
-        X = np.concatenate((np.ones((X.shape[0], 1)), X), axis=1)
-        return LinearRegression.f(X, self.w)
+        X = validate_feature_matrix(X)
+        return X @ self.weights + self.bias
 
-    @staticmethod
-    def f(X, w):
-        return X @ w
+    def _gradient_weights(self, pred):
+        return 2 / len(self.y) * self.X.T @ (pred - self.y)
 
-    @staticmethod
-    def g(X, y, pred):
-        return 2 / len(y) * X.T @ (pred - y)
+    def _gradient_bias(self, pred):
+        return 2 / len(self.y) * np.sum(pred - self.y)
 
     def __len__(self):
         return self.n
-
-
-def main():
-    from matplotlib import pyplot as plt
-    from sklearn.datasets import load_diabetes
-
-    X, y = load_diabetes(return_X_y=True)
-    #X = X[:, :5]
-
-    reg = LinearRegression()
-    reg.fit(X, y, epochs=10000, lr=0.2)
-    pred = reg.predict(X)
-
-    print(r2_score(y, pred))
-    print(reg.w)
-    
-    """
-    fig, ax = plt.subplots()
-    ax.scatter(X, y)
-    xs = np.linspace(min(X), max(X), 100)
-    xs_pred = reg.predict(xs) 
-    ax.plot(xs, reg.predict(xs), color='red')
-    plt.show()
-    """
-
-if __name__ == '__main__':
-    main()
