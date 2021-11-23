@@ -3,6 +3,7 @@ from math import inf
 
 from ..metrics import mse, cross_entropy
 from ..utils import validate_feature_matrix, validate_target_vector, check_consistent_length
+
 class LogisticRegression:
     """
     Implementation of multinomial logistic regression, where p quantitative and qualitative
@@ -57,7 +58,7 @@ class LogisticRegression:
         self.db = db
 
 
-    def fit(self, X, y, epochs=None, lr=0.01, verbose=False):
+    def fit(self, X, y, epochs=100000, lr=0.01, verbose=False):
         self.X = validate_feature_matrix(X)
         self.y = validate_target_vector(y)
         check_consistent_length(self.X, self.y)
@@ -95,7 +96,7 @@ class LogisticRegression:
                     print(f'Epoch {e+1}: Training Loss: {loss}, Improvement: {improvement}')
 
             # stop criterion
-            if improvement < np.exp(-20) or e >= self.epochs:
+            if improvement < np.exp(-10) or e >= self.epochs:
                 break
 
         self.fitted = True
