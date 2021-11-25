@@ -1,8 +1,9 @@
 import numpy as np
 
+from .._base import BaseRegressor
 from ..utils import validate_feature_matrix, validate_target_vector, check_consistent_length
 
-class SimpleLinearRegression:
+class SimpleLinearRegression(BaseRegressor):
     """
     Implementation of a simple linear regression, where a single quantitative
     feature predicts a single quantitative response. Based on derivative of
@@ -35,8 +36,7 @@ class SimpleLinearRegression:
 
     def __init__(self):
         # generic attribute 
-        self.X = self.y = self.n = self.p = None
-        self.fitted = None
+        super().__init__()
 
         # model parameters
         self.slope = None
@@ -61,7 +61,4 @@ class SimpleLinearRegression:
 
     def predict(self, X):
         X = validate_feature_matrix(X)
-        return (X * self.slope) + self.bias
-
-    def __len__(self):
-        return self.n
+        return ((X * self.slope) + self.bias).reshape(-1)

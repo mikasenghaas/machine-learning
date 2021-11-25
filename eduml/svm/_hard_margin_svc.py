@@ -1,13 +1,9 @@
 import numpy as np
 from scipy.optimize import minimize
-from matplotlib import pyplot as plt
-from mlxtend.plotting import plot_decision_regions
-from sklearn.datasets import load_iris
-from sklearn.metrics import accuracy_score
-from icecream import ic
 
+from .._base import BaseClassifier
 
-class HardMarginSVC:
+class HardMarginSVC(BaseClassifier):
     """
     The Hard Margin SVC (also: Maximal Margin Classifier) tries to find a hyperplane in p-1 dimensional space
     that linearly separates two distinct classes. It can thus be used for high dimensional
@@ -35,10 +31,7 @@ class HardMarginSVC:
 
     def __init__(self):
         # data specific params
-        self.X = None
-        self.y = None
-        self.n = None
-        self.p = None
+        super().__init__()
 
         self.mapping = {}
 
@@ -135,7 +128,8 @@ class HardMarginSVC:
         return self.n
 
 
-def main():
+"""
+if __name__ == '__main__':
     SHOW_FIGURES = True
 
     X, y = load_iris(return_X_y=True)
@@ -168,7 +162,5 @@ def main():
 
     if SHOW_FIGURES:
         plt.show()
-
-if __name__ == '__main__':
-    main()
+"""
 

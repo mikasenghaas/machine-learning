@@ -1,6 +1,8 @@
 import numpy as np
 
-class QDA:
+from .._base import BaseClassifier
+
+class QDA(BaseClassifier):
     """
     Implementation of multivariate quadratic discriminant analysis (LDA), where p quantitative 
     features are used in a multiclass classification setting, ie. to distinguish between k distinct classes.
@@ -35,11 +37,7 @@ class QDA:
     """
 
     def __init__(self):
-        # data specific params
-        self.X = None
-        self.y = None
-        self.n = None
-        self.p = None
+        super().__init__()
 
         # model parameters
         self.pi_ks = None 
@@ -100,25 +98,3 @@ class QDA:
         for i, k in enumerate(np.unique(y)):
             cov_ks.append(np.cov(X[y==k].T))
         return cov_ks
-
-    def __len__(self):
-        return self.n
-
-
-
-if __name__ == '__main__':
-    from matplotlib import pyplot as plt
-    from sklearn.datasets import load_iris
-    from mlxtend.plotting import plot_decision_regions
-
-    X, y = load_iris(return_X_y=True)
-    X = X[:, :2]
-
-    clf = QDA()
-    clf.fit(X, y)
-
-    # print(clf.predict(X))
-
-    # plot_decision_regions(X, y, clf, mesh_size=0.1)
-    fig = plot_decision_regions(X, y, clf)
-    plt.show()

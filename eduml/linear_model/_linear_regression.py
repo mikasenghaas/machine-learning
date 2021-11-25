@@ -1,10 +1,11 @@
 import numpy as np
 from math import inf
 
+from .._base import BaseRegressor
 from ..metrics import mse  
 from ..utils import validate_feature_matrix, validate_target_vector, check_consistent_length
 
-class LinearRegression:
+class LinearRegression(BaseRegressor):
     """
     Implementation of a linear regression, where p quantitative and qualitative
     feature predict a single quantitative response. Optimisation until gradient
@@ -37,11 +38,9 @@ class LinearRegression:
     """
 
     def __init__(self, loss=mse, optim='GD'):
-        # data specific params
-        self.X = self.y = self.n = self.p = None
-        self.fitted = False
-
         # gradient descent training
+        super().__init__()
+
         self.optim = optim
         self.loss = loss
         self.epochs = None 
@@ -94,13 +93,10 @@ class LinearRegression:
 
     def predict(self, X):
         X = validate_feature_matrix(X)
-        return X @ self.weights + self.bias
+        return (X @ self.weights + self.bias).reshape(-1)
 
     def _gradient_weights(self, pred):
         return 2 / len(self.y) * self.X.T @ (pred - self.y)
 
     def _gradient_bias(self, pred):
         return 2 / len(self.y) * np.sum(pred - self.y)
-
-    def __len__(self):
-        return self.n

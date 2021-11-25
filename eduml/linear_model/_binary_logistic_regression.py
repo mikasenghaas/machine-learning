@@ -1,10 +1,11 @@
 import numpy as np
 from math import inf
 
+from .._base import BaseClassifier
 from ..metrics import mse, cross_entropy
 from ..utils import validate_feature_matrix, validate_target_vector, check_consistent_length
 
-class BinaryLogisticRegression:
+class BinaryLogisticRegression(BaseClassifier):
     """
     Implementation of a simple logistic regression, where p quantitative and qualitative
     features are used in binary classification setting to distinguish between k=2 distinct classes.
@@ -40,9 +41,7 @@ class BinaryLogisticRegression:
     """
 
     def __init__(self, db=0.5, loss=cross_entropy, optim='GD'):
-        # generic attributes
-        self.X = self.y = self.n = self.p = self.k = None
-        self.fitted = False
+        super().__init__()
 
         # gradient descent training
         self.optim = optim
@@ -117,6 +116,3 @@ class BinaryLogisticRegression:
 
     def _gradient_bias(self, pred):
         return 2 / len(self.y) * np.sum(pred - self.y)
-
-    def __len__(self):
-        return self.n

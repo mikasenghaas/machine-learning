@@ -1,7 +1,9 @@
 import numpy as np
 from scipy.stats import norm
 
-class NaiveBayes:
+from .._base import BaseClassifier
+
+class NaiveBayes(BaseClassifer):
     """
     Implementation of the popular Naive Bayes classifier, used to distinguish 
     k different classes from p quantiative features.
@@ -43,11 +45,7 @@ class NaiveBayes:
     """
 
     def __init__(self):
-        # data specific params
-        self.X = None
-        self.y = None
-        self.n = None
-        self.p = None
+        super().__init__()
 
         # model parameters
         self.pi_ks = None 
@@ -106,22 +104,3 @@ class NaiveBayes:
         Outputs a three-dimensional matrix in the shape k x p x 2 (mean and std are estimated)
         """
         return np.array([[(np.mean(X[y==k, p]), np.std(X[y==k, p])) for p in range(X.shape[1])] for k in np.unique(y)])
-
-    def __len__(self):
-        return self.n
-
-
-if __name__ == '__main__':
-    from matplotlib import pyplot as plt
-    from sklearn.datasets import load_iris
-    from mlxtend.plotting import plot_decision_regions
-
-    X, y = load_iris(return_X_y=True)
-    X = X[:, :2]
-
-    clf = NaiveBayes()
-    clf.fit(X, y)
-
-    # plot_decision_regions(X, y, clf, mesh_size=0.1)
-    fig = plot_decision_regions(X, y, clf)
-    plt.show()

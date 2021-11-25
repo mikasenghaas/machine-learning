@@ -1,6 +1,8 @@
 import numpy as np
 
-class LDA:
+from .._base import BaseClassifier
+
+class LDA(BaseClassifier):
     """
     Implementation of multivariate linear discriminant analysis (LDA), where p quantitative 
     features are used in a multiclass classification setting, ie. to distinguish between k distinct classes.
@@ -35,11 +37,7 @@ class LDA:
     """
 
     def __init__(self):
-        # data specific params
-        self.X = None
-        self.y = None
-        self.n = None
-        self.p = None
+        super().__init__()
 
         # model parameters
         self.pi_ks = None 
@@ -92,22 +90,3 @@ class LDA:
     @staticmethod
     def estimate_cov(X):
         return np.cov(X.T) # transpose because np.cov assumes to have features in rows, not cols
-
-    def __len__(self):
-        return self.n
-
-if __name__ == '__main__':
-    # infile testing
-    from matplotlib import pyplot as plt
-    from sklearn.datasets import load_iris
-    from mlxtend.plotting import plot_decision_regions
-        
-    X, y = load_iris(return_X_y=True)
-    X = X[:, :2]
-
-    clf = LDA()
-    clf.fit(X, y)
-
-    # plot_decision_regions(X, y, clf, mesh_size=0.1)
-    fig = plot_decision_regions(X, y, clf)
-    plt.show()

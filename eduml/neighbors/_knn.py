@@ -1,10 +1,11 @@
 import numpy as np
 from sklearn.neighbors import BallTree
-from sklearn.datasets import load_iris
 from scipy.stats import mode
 
+from .._base import BaseClassifier
 
-class KNN:
+
+class KNN(BaseClassifier):
     """
     KNN classifier implementation supporing different algorithms for computation 
     of k-nearest neighbours:
@@ -58,10 +59,7 @@ class KNN:
 
     def __init__(self, K=5, algorithm='brute'):
         # data specific params
-        self.X = None
-        self.y = None
-        self.n = None
-        self.p = None
+        super().__init__()
 
         # hyperparameters
         self.K = K
@@ -92,8 +90,6 @@ class KNN:
         elif self.algorithm == 'ball-tree':
             pass
 
-
-
     def predict_proba(self, X):
         if self.algorithm == 'brute':
             if len(X.shape) == 1:
@@ -112,23 +108,3 @@ class KNN:
     @staticmethod
     def euclidean_distance(x, y):
         return np.sqrt(np.sum((x-y)**2))
-
-    def __len__(self):
-        return self.n
-
-
-if __name__ == '__main__':
-    from matplotlib import pyplot as plt
-    from plotting import plot_decision_regions
-
-    ks = [1, 3, 5, 10]
-    fig, ax = plt.subplots(ncols=len(ks))
-    X, y = load_iris(return_X_y=True)
-    X = X[:, :2]
-
-    for i, k in enumerate(ks):
-        knn = KNN(K=k, algorithm='brute')
-        knn.fit(X, y)
-
-        plot_decision_regions(X, y, knn, mesh_size=0.1)
-    plt.show()

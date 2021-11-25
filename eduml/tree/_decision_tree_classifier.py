@@ -4,8 +4,9 @@ import numpy as np
 
 from ._decision_tree import DecisionTree
 from ..metrics import binary_gini, gini, entropy
+from .._base import BaseClassifier
 
-class DecisionTreeClassifier(DecisionTree):
+class DecisionTreeClassifier(BaseClassifier, DecisionTree):
     def __init__(self, criterion='gini', max_depth=None, algorithm='greedy', max_features='auto'):
 
         super().__init__(max_depth=max_depth, algorithm=algorithm, max_features=max_features)

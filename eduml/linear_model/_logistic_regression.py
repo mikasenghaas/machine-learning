@@ -1,10 +1,11 @@
 import numpy as np
 from math import inf
 
+from .._base import BaseClassifier
 from ..metrics import mse, cross_entropy
 from ..utils import validate_feature_matrix, validate_target_vector, check_consistent_length
 
-class LogisticRegression:
+class LogisticRegression(BaseClassifier):
     """
     Implementation of multinomial logistic regression, where p quantitative and qualitative
     features are used in multiclass classification setting, ie. to distinguish between k>=2 distinct classes.
@@ -41,8 +42,7 @@ class LogisticRegression:
 
     def __init__(self, db=0.5, loss=mse, optim='GD'):
         # generic attributes
-        self.X = self.y = self.n = self.p = self.k = None
-        self.fitted = False
+        super().__init__()
 
         # gradient descent training
         self.optim = optim

@@ -3,8 +3,9 @@ import numpy as np
 
 from ._decision_tree import DecisionTree
 from ..metrics import mse_split
+from .._base import BaseRegressor
 
-class DecisionTreeRegressor(DecisionTree):
+class DecisionTreeRegressor(BaseRegressor, DecisionTree):
     def __init__(self, criterion='mse', 
                  max_depth=None,
                  algorithm='greedy',
