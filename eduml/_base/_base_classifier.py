@@ -22,7 +22,7 @@ class BaseClassifier(BaseModel):
         
         return self.k 
 
-    def score(self, X):
+    def score(self):
         if not self.is_fitted():
             raise ModelNotFittedError(f'{self._model_name} is not fitted yet.')
 

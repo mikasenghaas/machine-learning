@@ -3,9 +3,9 @@ The :mod:`eduml.svm` module includes machine learning algorithms associated with
 the concept of support vector machines.
 """
 
-from .hard_margin_svc import HardMarginSVC
-from .soft_margin_svc import SoftMarginSVC
-from .svm import SVM
+from ._hard_margin_svc import HardMarginSVC
+from ._soft_margin_svc import SoftMarginSVC
+from ._svm import SVM
 
 __all__ = [
         'HardMarginSVC',
