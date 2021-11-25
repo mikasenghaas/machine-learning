@@ -1,8 +1,9 @@
 from matplotlib import pyplot as plt
 import numpy as np 
 
-def plot_1d_regression(X, y, model, figsize=(8,6), title='unnamed'):
-    fig, ax = plt.subplots(figsize=figsize)
+def plot_1d_regression(X, y, model, title='unnamed', ax=None):
+    if ax==None:
+        fig, ax = plt.subplots(figsize=(8, 6))
 
     ax.scatter(X, y, c='b', label='$X_1$');
     x_range = np.linspace(min(X), max(X), 1000)
@@ -12,4 +13,4 @@ def plot_1d_regression(X, y, model, figsize=(8,6), title='unnamed'):
     ax.set_ylabel('$y$');
     ax.grid()
 
-    return fig
+    return ax 
