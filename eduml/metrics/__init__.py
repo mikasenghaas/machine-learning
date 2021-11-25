@@ -11,6 +11,12 @@ from ._classification import precision_score
 from ._classification import f1_score
 from ._classification import classification_report
 
+from ._regression import rss_score
+from ._regression import rse_score
+from ._regression import tss_score
+from ._regression import r2_score
+from ._regression import mean_squared_error
+
 from ._loss import mse
 from ._loss import se
 from ._loss import mae 
@@ -30,6 +36,11 @@ __all__ = [
         'recall_score',
         'precision_score',
         'f1_score',
+
+        'rss_score',
+        'rse_score',
+        'tss_score', 
+        'r2_score',
 
         'mse',
         'se',
